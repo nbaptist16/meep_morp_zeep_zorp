@@ -1,0 +1,230 @@
+<?xml version="1.0" ?>
+
+<!--http://wiki.ros.org/urdf/XML/link-->
+<!-- <robot name="headlessk9" xmlns:xacro="http://www.ros.org/wiki/xacro"> -->
+<robot name="diff_drive" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find diff_drive)/urdf/ddrive.gazebo.xacro"/>
+
+  <!-- <xacro:include filename="$(find diff_drive)/urdf/ddrive.gazebo.xacro"/>
+
+  <xacro:property name="yaml_file" value="$(find diff_drive)/config/ddrive.yaml" />
+  <xacro:property name="propz" value="${load_yaml(yaml_file)}"/>
+ 
+  <xacro:property name="length" value="${propz['length']}" />
+  <xacro:property name="width" value="${propz['width']}" />
+  <xacro:property name="height" value="${propz['height']}" />
+  <xacro:property name="radius" value="${propz['radius']}" />
+  <xacro:property name="small" value="${propz['small']}" />
+
+  <xacro:property name="body" value="${propz['body']}" />
+  <xacro:property name="wheel" value="${propz['wheel']}" />
+  <xacro:property name="caster" value="${propz['caster']}" /> -->
+
+  <!-- NEW BELOW -->
+  <xacro:property name="properties" value="${load_yaml('$(find diff_drive)/config/ddrive.yaml')}"/>
+  
+  <xacro:property name="length" value="${properties.get('length')}" />
+  <xacro:property name="width" value="${properties.get('width')}" />
+  <xacro:property name="height" value="${properties.get('height')}" />
+  <xacro:property name="radius" value="${properties.get('radius')}" />
+  <xacro:property name="small" value="${properties.get('small')}" />
+
+  <xacro:property name="body" value="${properties.get('body')}" />
+  <xacro:property name="wheel" value="${properties.get('wheel')}" />
+  <xacro:property name="caster" value="${properties.get('caster')}" />
+
+  <!-- CAN INCLUDE MASS IN YAML TO MAKE IT EASIER TO CHANGE QUICKLY FOR TESTING -->
+
+  <!-- Body -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="${length} ${width} ${height}"/>
+      </geometry>
+      <material name="yellow">
+        <color rgba = "1 1 0 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="${length} ${width} ${height}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="${body}"/>
+      <inertia iyy="${(body*(length*length+height*height))/12}" ixy="0.0" ixz="0.0"
+                izz="${(body*(length*length+width*width))/12}" iyz="0.0"
+                ixx="${(body*(width*width+height*height))/12}" />
+      <!-- <inertia ixx="0" ixy="0.0" ixz="0.0"
+                iyy="0" iyz="0.0"
+                izz="${(body*width*width*height*height)/12}" /> -->
+    </inertial>
+  </link>
+
+  <!-- Joint: wheel (l) -->
+  <joint name="wheel_left_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_left_link"/>
+    <origin xyz="${length/3} ${width/2 + 0.05} 0" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Wheel (L) -->
+  <link name="wheel_left_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.07" radius="${radius}"/>
+      </geometry>
+      <material name="yg">
+        <color rgba = "0.85 1 0 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <cylinder length="0.07" radius="${radius}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="${wheel}" />
+      <!-- ix = iy = 0.25*m*r*r; iz = 0/5*m*r*r -->
+      <inertia ixx="${0.25*wheel*(radius*radius+0.0049)}" ixy="0.0" ixz="0.0"
+               iyy="${0.25*wheel*(radius*radius+0.0049)}" iyz="0.0"
+               izz="${0.5*wheel*radius*radius}" />
+    </inertial>
+  </link>
+
+  <!-- Joint: wheel (r) -->
+  <joint name="wheel_right_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_right_link"/>
+    <!-- <origin xyz="${-length/3} -${width/2 + 0.025} 0" rpy="-1.5708 0 0"/> -->
+    <origin xyz="${length/3} ${-width/2 - 0.05} 0" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Wheel (R) -->
+  <link name="wheel_right_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.07" radius="${radius}"/>
+      </geometry>
+      <material name="yg">
+        <color rgba = "0.85 1 0 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <cylinder length="0.07" radius="${radius}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="${wheel}" />
+      <inertia ixx="${0.25*wheel*(radius*radius+0.0049)}" ixy="0.0" ixz="0.0"
+               iyy="${0.25*wheel*(radius*radius+0.0049)}" iyz="0.0"
+               izz="${0.5*wheel*radius*radius}" />
+    </inertial>
+  </link>
+
+  <!-- Joint: caster (lo) -->
+  <joint name="caster_lo_joint" type="fixed">
+    <axis xyz="0 0 1" />
+    <parent link="base_link"/>
+    <child link="caster_lo_link"/>
+    <!-- <origin xyz="${length/2 - small} 0 -${height/2}" rpy="-1.5708 0 0"/> -->
+    <!-- <origin xyz="${length/2 - small} 0 ${-height/2}" rpy="-1.5708 0 0"/> -->
+    <origin xyz="${-length/2 + small} 0 ${-height/2 - small}" rpy="-1.5708 0 0"/>
+    <!-- <origin xyz="${length/2 - small} 0 ${(2*radius - height)/2}" rpy="-1.5708 0 0"/> -->
+  </joint>
+
+  <!-- Caster (lo) -->
+  <link name="caster_lo_link">
+    <visual>
+      <geometry>
+        <sphere radius="${small}"/>
+      </geometry>
+      <material name="orangey">
+        <color rgba = "1 0.85 0 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <!-- <box size="0.030 0.009 0.020"/> -->
+        <sphere radius="${small}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="${caster}" />
+      <inertia ixx="0.00" ixy="0.0" ixz="0.0"
+               iyy="0.00" iyz="0.0"
+               izz="0.00" />
+    </inertial>
+  </link>
+
+  <!-- Joint: caster (hi) -->
+  <joint name="caster_hi_joint" type="fixed">
+    <axis xyz="0 0 1" />
+    <parent link="base_link"/>
+    <child link="caster_hi_link"/>
+    <!-- <origin xyz="${length/2 - small} 0 ${height/2}" rpy="-1.5708 0 0"/> -->
+    <origin xyz="${-length/2 + small} 0 ${height/2 + small}" rpy="-1.5708 0 0"/>
+  </joint>
+
+  <!-- Caster (hi) -->
+  <link name="caster_hi_link">
+    <visual>
+      <geometry>
+        <sphere radius="${small}"/>
+      </geometry>
+      <material name="orangey">
+        <color rgba = "1 0.85 0 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <!-- <box size="0.030 0.009 0.020"/> -->
+        <sphere radius="${small}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="${caster}" />
+      <inertia ixx="0.00" ixy="0.0" ixz="0.0"
+               iyy="0.00" iyz="0.0"
+               izz="0.00" />
+    </inertial>
+  </link>
+
+  <!-- from https://github.com/udacity/simple_arm_01/issues/2 -->
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wheel_left_joint">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor1">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wheel_right_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor2">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+</robot>

@@ -1,0 +1,21 @@
+<launch>
+  <param name="robot_description" command="$(find xacro)/xacro $(find diff_drive)/urdf/ddrive.urdf.xacro" />    
+
+  <arg name="mov" default="False" />
+  <arg name="stp" default="True" unless="$(arg mov)" />
+  <arg name="stp" value="False" if="$(arg mov)"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  <!-- below for viewing robot in rviz (stationary) -->
+  <group if="$(arg stp)">
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find diff_drive)/config/hw3bot.rviz" />
+  </group>
+  <node name="follow_rect" pkg="diff_drive" type="follow_rect" />
+
+  <!-- below for viewing robot in rviz (rectangle) -->
+  <!-- note: ddrive.launch must be running and unpaused -->
+  <group if="$(arg mov)">
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find diff_drive)/config/hw3botmove.rviz" />
+  </group>
+</launch>

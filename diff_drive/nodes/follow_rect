@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+"""Follow_Rect Node:
+Publishers:
+    /diff/cmd_vel (geometry_msgs/Twist) - velocity for robot to follow trajectory
+
+Subscribers:
+    /diff/odom    (nav_msgs/Odometry) - receives data on the odometry of the robot
+
+Services:
+    none
+
+Broadcasters:
+    none
+
+Parameters:
+    //instantiated in .xacro files (please see ReadMe.md for more info) -- all floats
+    (chassis: length, width, height, weight
+        wheel: radius, weight
+        caster: diameter, weight)
+        -- all distances in m; masses in kg
+
+Exceptions:none
+"""
+
+import rospy
+from geometry_msgs.msg import Twist, Vector3, Pose, PoseStamped, Quaternion
+# import math
+from nav_msgs.msg import Path, Odometry
+# import rosservice as srv
+# from std_srvs.srv import Empty, EmptyResponse
+# import tf
+# import tf2_ros
+import yaml
+
+class FollowRect():
+    '''
+    Creates FollowRect object: receives robot odometry to produce/publish its trajectory
+        arguments: none
+        returns: none
+        exceptions: none
+
+        publisher (pubc): publishes velocity of robot path as Twist to topic cmd_vel
+        subscriber (subo): subscribes to (receives) odometry of robot at current time as Odometry from topic odom
+    '''
+    def __init__(self):
+        '''
+        initial definition of variables for FollowRect
+            arguments: none
+            returns: none
+            exceptions: none
+        '''
+        rospy.init_node('follow_rect', anonymous=False)
+
+        self.now = rospy.Time.now().secs + rospy.Time.now().nsecs/1000000000
+        self.x = 0
+        self.y = 0
+        self.ang = 0
+        self.freq = 100
+
+        self.lapse = 0
+        self.fwd = True
+
+        self.pubc = rospy.Publisher('/diff/cmd_vel', Twist, queue_size=10)
+        self.subo = rospy.Subscriber('/diff/odom', Odometry, self.inpos)
+        
+        self.path = Path()
+        self.path.header.stamp = rospy.Time.now()
+        self.path.header.frame_id = 'world'
+    
+    def inpos(self, odominit):
+        '''
+        callback function for subscriber, subo;
+            arguments: odominit -- odometry object containing the robot's odometry
+                inc: position (x and y), orientation
+            returns: none
+            exceptions: none
+        '''
+        self.x = odominit.pose.pose.position.x
+        self.y = odominit.pose.pose.position.y
+        self.ang = odominit.pose.pose.orientation
+    
+    def pubvel(self, vee, ome):
+        '''
+        publishing function (to keep main bit clean, sorta)
+            arguments: vee -- linear velocity (float) in +x-direction of the robot (m/s)
+                       ome -- angular velocity (float) of the robot (rad/s)
+            returns: none
+            exceptions: none
+        '''
+        rate = rospy.Rate(self.freq)
+        trajectory = Twist(Vector3(vee, 0, 0), Vector3(0, 0, ome))
+        self.pubc.publish(trajectory)
+        rate.sleep()
+    
+if __name__ == "__main__":
+    '''
+    Not really a function, but I didn't want her to feel left out
+    Creates FollowRect object and initializes speed (mach) and dimensions of rectangle trajectory (w, h)
+        goes straight until reached distance of width, turns ~pi/2 rad, straight until length, you get the idea
+    '''
+    excellentrectangle = FollowRect()
+
+    mach = 0.5
+    widthh = 4
+    heightt = 2
+
+    while not rospy.is_shutdown() and excellentrectangle.x<widthh:
+        excellentrectangle.pubvel(mach,0)
+    excellentrectangle.pubvel(0,0)
+    # while not rospy.is_shutdown() and excellentrectangle.ang.z<(0.5):
+    # while not rospy.is_shutdown() and excellentrectangle.ang.z<(math.pi):
+    # while not rospy.is_shutdown() and excellentrectangle.ang.z<(0.66):
+    while not rospy.is_shutdown() and excellentrectangle.ang.z<(0.69):
+        excellentrectangle.pubvel(0,mach)
+    excellentrectangle.pubvel(0,0)
+    while not rospy.is_shutdown() and excellentrectangle.y<heightt:
+        excellentrectangle.pubvel(mach,0)
+    excellentrectangle.pubvel(0,0)
+    # while not rospy.is_shutdown() and excellentrectangle.ang.z<.92:
+    # while not rospy.is_shutdown() and excellentrectangle.ang.z<(math.pi*1.5):
+    while not rospy.is_shutdown() and (excellentrectangle.ang.z<(0.9995)):
+        excellentrectangle.pubvel(0,mach)
+    excellentrectangle.pubvel(0,0)
+    while not rospy.is_shutdown() and excellentrectangle.x>0:
+        excellentrectangle.pubvel(mach,0)
+    excellentrectangle.pubvel(0,0)
+    # while not rospy.is_shutdown() and (excellentrectangle.ang.z<-.5 or excellentrectangle.ang.z>.92):
+    # while not rospy.is_shutdown() and (excellentrectangle.ang.z<-(math.pi) or excellentrectangle.ang.z>(math.pi*1.5)):
+    while not rospy.is_shutdown() and (excellentrectangle.ang.z<-(0.0) or excellentrectangle.ang.z>(0.74)):
+        excellentrectangle.pubvel(0,mach)
+    excellentrectangle.pubvel(0,0)
+    while not rospy.is_shutdown() and excellentrectangle.y>0:
+        excellentrectangle.pubvel(mach,0)
+    excellentrectangle.pubvel(0,0)
+    # while not rospy.is_shutdown() and excellentrectangle.ang.z<0.0:
+    #     excellentrectangle.pubvel(0,mach)
+    while not rospy.is_shutdown():
+        excellentrectangle.pubvel(0,0)
+   
+    rospy.spin()

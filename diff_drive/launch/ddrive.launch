@@ -1,0 +1,37 @@
+<launch>
+  <!-- Load the URDF into the ROS Parameter Server -->
+  <!-- EDIT: change file name to change robot model spawned -->
+  <param name="robot_description" command="$(find xacro)/xacro $(find diff_drive)/urdf/ddrive.urdf.xacro" />  
+
+  <arg name="drectangle" default="true" />
+
+  <!-- EDIT: change file name to change gazebo world loaded -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find diff_drive)/worlds/ddrive.world"/>
+    <arg name="paused" value="true"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- EDIT: change the values following '-x', '-y', and '-z' to edit the respective initial spawn coordinates -->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model diff_drive -x 0 -y 0 -z 1 -param robot_description" />
+
+  <node if="$(arg drectangle)" name="follow_rect" pkg="diff_drive" type="follow_rect" output = "screen"/>
+  <node  unless="$(arg drectangle)" name="flipper" pkg="diff_drive" type="flipper" output = "screen"/>
+
+  <!-- Comment above and uncomment below for quick testing the flips -->
+  <!-- <node if="$(arg drectangle)" name="flipper" pkg="diff_drive" type="flipper" output = "screen"/> -->
+  
+  <arg name="rviz" default="False" />
+  <group if="$(arg rviz)">
+    <param name="robot_description" command="$(find xacro)/xacro $(find diff_drive)/urdf/ddrive.urdf.xacro" />    
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find diff_drive)/config/hw3bot.rviz" />
+
+    <node name="follow_rect" pkg="diff_drive" type="follow_rect" />
+  </group>
+</launch>

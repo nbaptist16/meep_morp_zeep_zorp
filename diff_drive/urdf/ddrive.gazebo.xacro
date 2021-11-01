@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<!-- <robot name="headlessk9" xmlns:xacro="http://ros.org/wiki/xacro"> -->
+<robot name="diff_drive" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- PARAMZ -->
+  <xacro:property name="properties" value="${load_yaml('$(find diff_drive)/config/ddrive.yaml')}"/>
+  
+  <xacro:property name="length" value="${properties.get('length')}" />
+  <xacro:property name="width" value="${properties.get('width')}" />
+  <xacro:property name="height" value="${properties.get('height')}" />
+  <xacro:property name="radius" value="${properties.get('radius')}" />
+  <xacro:property name="small" value="${properties.get('small')}" />
+
+  <xacro:property name="body" value="${properties.get('body')}" />
+  <xacro:property name="wheel" value="${properties.get('wheel')}" />
+  <xacro:property name="caster" value="${properties.get('caster')}" />
+
+  <gazebo reference="base_link">
+    <mu1>2</mu1>
+    <mu2>2</mu2>
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+
+  <gazebo reference="wheel_left_link">
+    <mu1>100</mu1>
+    <mu2>100</mu2>
+    <!-- <kp>500000.0</kp>
+    <kd>10.0</kd> -->
+    <minDepth>0.001</minDepth>
+    <maxVel>10000</maxVel>
+    <fdir1>1 0 0</fdir1>
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+
+  <gazebo reference="wheel_right_link">
+    <mu1>100</mu1>
+    <mu2>100</mu2>
+    <!-- <kp>500000.0</kp>
+    <kd>10.0</kd> -->
+    <minDepth>0.001</minDepth>
+    <maxVel>10000</maxVel>
+    <fdir1>1 0 0</fdir1>
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+
+  <gazebo reference="caster_lo_link">
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
+    <!-- <kp>1000000.0</kp>
+    <kd>100.0</kd> -->
+    <minDepth>0.001</minDepth>
+    <maxVel>10000</maxVel>
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+
+  <gazebo reference="caster_hi_link">
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
+    <!-- <kp>1000000.0</kp>
+    <kd>100.0</kd> -->
+    <minDepth>0.001</minDepth>
+    <maxVel>10000</maxVel>
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+
+  <gazebo>
+        <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+            <rosDebugLevel>/diff</rosDebugLevel>
+            <alwaysOn>true</alwaysOn>
+            <updateRate>100</updateRate>
+            <leftJoint>wheel_left_joint</leftJoint>
+            <rightJoint>wheel_right_joint</rightJoint>
+            <wheelSeparation>${width+(.0049*2)}</wheelSeparation>
+            <wheelDiameter>${radius*2}</wheelDiameter>
+            <!-- <wheelTorque>20</wheelTorque> -->
+            <wheelTorque>100</wheelTorque>
+            <commandTopic>diff/cmd_vel</commandTopic>
+            <odometryTopic>diff/odom</odometryTopic>
+            <odometryFrame>odom</odometryFrame>
+            <robotBaseFrame>base_link</robotBaseFrame>
+            <publishWheelTF>false</publishWheelTF>
+            <publishOdomTF>true</publishOdomTF>
+            <publishWheelJointState>true</publishWheelJointState>
+            <wheelAcceleration>false</wheelAcceleration>
+            <odometrySource>world</odometrySource>
+            <publishTf>1</publishTf>
+        </plugin>
+    </gazebo>
+
+  <!-- <gazebo reference="base_scan">
+    <material>Gazebo/FlatBlack</material>
+    <sensor type="ray" name="lds_lfcd_sensor">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>$(arg laser_visual)</visualize>
+      <update_rate>5</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1</resolution>
+            <min_angle>0.0</min_angle>
+            <max_angle>6.28319</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.120</min>
+          <max>3.5</max>
+          <resolution>0.015</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_lds_lfcd_controller" filename="libgazebo_ros_laser.so">
+        <topicName>scan</topicName>
+        <frameName>base_scan</frameName>
+      </plugin>
+    </sensor> -->
+
+</robot>
